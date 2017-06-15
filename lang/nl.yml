@@ -1,0 +1,3 @@
+nl:
+  TicketValidator:
+    WRONG_CONFIGURATION: 'Controleer of uw app goed is geconfigureerd.'
