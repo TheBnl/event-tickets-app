@@ -6,7 +6,7 @@
  * Date: 14/06/2017
  */
 
-namespace Broarm\EventTickets;
+namespace Broarm\EventTickets\App;
 
 use Convert;
 use DataObject;

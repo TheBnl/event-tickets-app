@@ -4,8 +4,8 @@ After: 'event-tickets/*'
 ---
 SiteConfig:
   extensions:
-    - 'Broarm\EventTickets\TicketScannerExtension'
+    - 'Broarm\EventTickets\App\TicketScannerExtension'
 
 Director:
   rules:
-    'validateticket': 'Broarm\EventTickets\TicketValidator'
+    'validateticket': 'Broarm\EventTickets\App\TicketValidator'

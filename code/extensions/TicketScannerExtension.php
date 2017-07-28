@@ -6,13 +6,12 @@
  * Date: 14/06/2017
  */
 
-namespace Broarm\EventTickets;
+namespace Broarm\EventTickets\App;
 
 use DataExtension;
 use FieldList;
 use GridField;
 use GridFieldConfig_RecordEditor;
-use PasswordEncryptor;
 use RandomGenerator;
 
 /**
@@ -31,7 +30,7 @@ class TicketScannerExtension extends DataExtension
     private static $has_one = array();
 
     private static $has_many = array(
-        'ScanDevices' => 'Broarm\EventTickets\Device'
+        'ScanDevices' => 'Broarm\EventTickets\App\Device'
     );
 
     private static $many_many = array();

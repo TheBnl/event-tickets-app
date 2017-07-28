@@ -1,7 +1,8 @@
 <?php
 
-namespace Broarm\EventTickets;
+namespace Broarm\EventTickets\App;
 
+use Broarm\EventTickets\CheckInValidator;
 use Controller;
 use Convert;
 use Director;
@@ -46,17 +47,16 @@ class TicketValidator extends Controller
             $validator = CheckInValidator::create();
             $result = $validator->validate($code);
             switch ($result['Code']) {
-                default:
-                    return Convert::array2json($result);
                 case CheckInValidator::MESSAGE_CHECK_OUT_SUCCESS:
-                    $validator->getAttendee()->CheckedIn = false;
+                    $validator->getAttendee()->checkOut();
                     break;
                 case CheckInValidator::MESSAGE_CHECK_IN_SUCCESS:
-                    $validator->getAttendee()->CheckedIn = true;
+                    $validator->getAttendee()->checkIn();
                     break;
+                default:
+                    return Convert::array2json($result);
             }
 
-            $validator->getAttendee()->write();
             return Convert::array2json($result);
         } else {
             return $this->httpError(404, Convert::array2json(array(
