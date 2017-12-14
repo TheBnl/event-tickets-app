@@ -14,7 +14,8 @@
   "require": {
     "silverstripe/framework": "~3.1",
     "silverstripe/cms": "~3.1",
-    "bramdeleeuw/silverstripe-event-tickets": "*"
+    "bramdeleeuw/silverstripe-event-tickets": "*",
+    "firebase/php-jwt": "*"
   },
   "extra": {
     "installer-name": "event-tickets_app"

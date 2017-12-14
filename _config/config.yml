@@ -2,10 +2,11 @@
 Name: event-tickets-app
 After: 'event-tickets/*'
 ---
-SiteConfig:
+Member:
   extensions:
     - 'Broarm\EventTickets\App\TicketScannerExtension'
 
 Director:
   rules:
-    'validateticket': 'Broarm\EventTickets\App\TicketValidator'
+    'eventtickets/authenticator': 'Broarm\EventTickets\App\Authenticator'
+    'eventtickets/validate': 'Broarm\EventTickets\App\TicketValidator'
