@@ -30,6 +30,7 @@ use BaconQrCode;
  * @property string Model
  * @property string DeviceID
  * @property string BundleID
+ * @property string LastLogin
  * @method \ManyManyList Members()
  */
 class Device extends DataObject
@@ -38,8 +39,7 @@ class Device extends DataObject
         'Note' => 'Text',
         'Token' => 'Varchar(255)',
         'UniqueID' => 'Varchar(255)',
-        'Brand' => 'Varchar(255)',
-        'Model' => 'Varchar(255)'
+        'LastLogin' => 'SS_DateTime'
     );
 
     private static $has_one = array(
@@ -56,9 +56,9 @@ class Device extends DataObject
 
     private static $summary_fields = array(
         'Title' => 'Name',
-        'Brand' => 'Brand',
-        'Model' => 'Model',
-        'Created.Nice' => 'Connected on'
+        'UniqueID' => 'Device ID',
+        'Created.Nice' => 'Connected on',
+        'LastLogin.Nice' => 'Last use'
     );
 
     public function getCMSFields()
@@ -106,10 +106,10 @@ class Device extends DataObject
      * Find or make a new device
      *
      * @param $uniqueID
-     * @param $brand
-     * @param $model
-     *
-     * @return DataObject|null|static
+     * @param null $brand
+     * @param null $model
+     * @return Device|DataObject|null
+     * @throws \ValidationException
      */
     public static function findOrMake($uniqueID, $brand = null, $model = null)
     {
@@ -118,9 +118,10 @@ class Device extends DataObject
             $device->UniqueID = $uniqueID;
             $device->Brand = $brand;
             $device->Model = $model;
-            $device->write();
         }
 
+        $device->LastLogin = time();
+        $device->write();
         return $device;
     }
 }

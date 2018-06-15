@@ -20,8 +20,8 @@ class TicketValidator extends Controller
      * Handle the request
      *
      * @param SS_HTTPRequest $request
-     *
-     * @return string
+     * @return SS_HTTPResponse|string
+     * @throws \SilverStripe\Omnipay\Exception\Exception
      */
     public function index(SS_HTTPRequest $request)
     {
@@ -53,7 +53,7 @@ class TicketValidator extends Controller
             return Convert::array2json(array_change_key_case($result));
         } else {
             return new SS_HTTPResponse(Convert::array2json(array(
-                'Code' => CheckInValidator::MESSAGE_ERROR,
+                'Code' => CheckInValidator::MESSAGE_TYPE_BAD,
                 'Message' => _t('TicketValidator.ERROR_TOKEN_AUTHENTICATION_FAILED', 'The request could not be authenticated, try to log in again.')
             )), 401);
         }

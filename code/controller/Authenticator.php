@@ -9,6 +9,7 @@ use DataObject;
 use Director;
 use Firebase\JWT\JWT;
 use Permission;
+use SilverStripe\Omnipay\Exception\Exception;
 use SiteConfig;
 use SS_HTTPRequest;
 use SS_HTTPResponse;
@@ -23,10 +24,12 @@ use UnexpectedValueException;
 class Authenticator extends Controller
 {
     const TYPE_ACCOUNT = 'ACCOUNT';
+    const VALIDATE_TICKET = 'eventtickets/validate';
+    const VALIDATE_TOKEN = 'eventtickets/authenticator/validatetoken';
 
     private static $icon = 'favicon-152';
 
-    private static $validate_path = 'eventtickets/validate';
+    private static $validate_path = '';
 
     private static $token_header = 'X-Authorization';
 
@@ -36,12 +39,17 @@ class Authenticator extends Controller
 
     private static $jwt_exp_offset = 9000;
 
+    private static $allowed_actions = array(
+        'authenticator',
+        'validateToken'
+    );
+
     /**
      * Handle the request
-     *
      * @param SS_HTTPRequest $request
-     *
-     * @return string
+     * @return SS_HTTPResponse
+     * @throws Exception
+     * @throws \ValidationException
      */
     public function index(SS_HTTPRequest $request)
     {
@@ -50,9 +58,7 @@ class Authenticator extends Controller
         if (
             isset($body['username']) &&
             isset($body['password']) &&
-            isset($body['uniqueId']) &&
-            isset($body['brand']) &&
-            isset($body['model'])
+            isset($body['uniqueId'])
         ) {
             /** @var \Authenticator $authClass */
             $authClass = \Authenticator::get_default_authenticator();
@@ -68,7 +74,7 @@ class Authenticator extends Controller
                     )), 401);
                 }
                 // find or create device and save token in it
-                $device = Device::findOrMake($body['uniqueId'], $body['brand'], $body['model']);
+                $device = Device::findOrMake($body['uniqueId']);
 
                 // create the token
                 $tokenData = array(
@@ -85,7 +91,6 @@ class Authenticator extends Controller
 
                 $token = JWT::encode($tokenData, self::jwtSecretKey(), self::config()->get('jwt_alg'));
                 $device->Token = $member->encryptWithUserSettings($token);
-                $device->write();
                 $member->ScanDevices()->add($device);
 
                 $siteConfig = SiteConfig::current_site_config();
@@ -95,7 +100,8 @@ class Authenticator extends Controller
                     'title' => $siteConfig->Title,
                     'image' => Director::absoluteBaseURL() . self::config()->get('icon'),
                     'token' => $token,
-                    'validatePath' => Director::absoluteBaseURL() . self::config()->get('validate_path')
+                    'validatePath' => Controller::join_links(Director::absoluteBaseURL(), self::VALIDATE_TICKET),
+                    'validateTokenPath' => Controller::join_links(Director::absoluteBaseURL(), self::VALIDATE_TOKEN)
                 )), 200);
             }
         }
@@ -109,8 +115,8 @@ class Authenticator extends Controller
      * Authenticate by given JWT
      *
      * @param SS_HTTPRequest $request
-     *
      * @return bool|SS_HTTPResponse
+     * @throws Exception
      */
     public static function authenticate(SS_HTTPRequest $request)
     {
@@ -121,7 +127,7 @@ class Authenticator extends Controller
                     $decoded = JWT::decode($jwt, self::jwtSecretKey(), array(self::config()->get('jwt_alg')));
                 } catch (UnexpectedValueException $e) {
                     return new SS_HTTPResponse(Convert::array2json(array(
-                        'code' => CheckInValidator::MESSAGE_ERROR,
+                        'code' => CheckInValidator::MESSAGE_TYPE_BAD,
                         'message' => $e->getMessage()
                     )), 401);
                 }
@@ -141,17 +147,25 @@ class Authenticator extends Controller
     }
 
     /**
-     * Get the token or return an error response
+     * @todo refresh token when valid
      *
-     * @return SS_HTTPResponse|string
+     * @param SS_HTTPRequest $request
+     * @return bool|SS_HTTPResponse
+     * @throws Exception
+     */
+    public function validateToken(SS_HTTPRequest $request) {
+        return self::authenticate($request);
+    }
+
+    /**
+     * Get the token or return an error response
+     * @return mixed
+     * @throws Exception
      */
     private static function jwtSecretKey()
     {
         if (!defined('JWT_SECRET_KEY')) {
-            return new SS_HTTPResponse(Convert::array2json(array(
-                'code' => CheckInValidator::MESSAGE_ERROR,
-                'message' => _t('TicketValidator.ERROR_SERVER_SETUP', 'The server is not set up properly, contact your site administrator.')
-            )), 501);
+            throw new Exception(_t('TicketValidator.ERROR_SERVER_SETUP', 'The server is not set up properly, contact your site administrator.'));
         }
 
         return JWT_SECRET_KEY;

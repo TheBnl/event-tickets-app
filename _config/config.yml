@@ -9,4 +9,5 @@ Member:
 Director:
   rules:
     'eventtickets/authenticator': 'Broarm\EventTickets\App\Authenticator'
+    'eventtickets/authenticator/validatetoken': 'Broarm\EventTickets\App\Authenticator'
     'eventtickets/validate': 'Broarm\EventTickets\App\TicketValidator'
