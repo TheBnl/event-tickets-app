@@ -24,6 +24,8 @@ use SilverStripe\Security\Member;
  */
 class Device extends DataObject
 {
+    private static $table_name = 'EventTickets_Device';
+    
     private static $db = [
         'Note' => 'Text',
         'Token' => 'Varchar',
