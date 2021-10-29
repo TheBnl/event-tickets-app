@@ -12,12 +12,14 @@
     }
   ],
   "require": {
-    "silverstripe/framework": "~3.1",
-    "silverstripe/cms": "~3.1",
-    "bramdeleeuw/silverstripe-event-tickets": ">=1.2.3",
+    "silverstripe/framework": "^4",
+    "silverstripe/cms": "^4",
+    "bramdeleeuw/silverstripe-event-tickets": "^2",
     "firebase/php-jwt": "*"
   },
-  "extra": {
-    "installer-name": "event-tickets_app"
+  "autoload": {
+      "psr-4": {
+          "Broarm\\EventTickets\\App\\": "src"
+      }
   }
 }

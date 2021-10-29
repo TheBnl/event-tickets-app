@@ -1,18 +1,20 @@
 <?php
 
-namespace Broarm\EventTickets\App;
+namespace Broarm\EventTickets\App\Controller;
 
-use Broarm\EventTickets\CheckInValidator;
-use Controller;
-use Convert;
-use DataObject;
-use Director;
+use Broarm\EventTickets\App\Model\Device;
+use Broarm\EventTickets\Forms\CheckInValidator;
+use Exception;
 use Firebase\JWT\JWT;
-use Permission;
-use SilverStripe\Omnipay\Exception\Exception;
-use SiteConfig;
-use SS_HTTPRequest;
-use SS_HTTPResponse;
+use SilverStripe\Control\Controller;
+use SilverStripe\Control\Director;
+use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Control\HTTPResponse;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\Security\Member;
+use SilverStripe\Security\MemberAuthenticator\MemberAuthenticator;
+use SilverStripe\Security\Permission;
+use SilverStripe\SiteConfig\SiteConfig;
 use UnexpectedValueException;
 
 /**
@@ -46,14 +48,14 @@ class Authenticator extends Controller
 
     /**
      * Handle the request
-     * @param SS_HTTPRequest $request
-     * @return SS_HTTPResponse
+     * @param HTTPRequest $request
+     * @return HTTPResponse
      * @throws Exception
      * @throws \ValidationException
      */
-    public function index(SS_HTTPRequest $request)
+    public function index(HTTPRequest $request)
     {
-        $body = Convert::json2array($request->getBody());
+        $body = json_decode($request->getBody(), true);
 
         if (
             isset($body['username']) &&
@@ -61,15 +63,15 @@ class Authenticator extends Controller
             isset($body['uniqueId'])
         ) {
             /** @var \Authenticator $authClass */
-            $authClass = \Authenticator::get_default_authenticator();
-            $member = $authClass::authenticate(array(
+            $auth = new MemberAuthenticator();
+            $member = $auth->authenticate(array(
                 'Email' => $body['username'],
                 'Password' => $body['password'],
-            ));
+            ), $request);
 
             if ($member->exists()) {
                 if (!Permission::check('HANDLE_CHECK_IN', 'any', $member)) {
-                    return new SS_HTTPResponse(Convert::array2json(array(
+                    return new HTTPResponse(json_encode(array(
                         'message' => _t('TicketValidator.ERROR_USER_PERMISSIONS', 'You don’t have enough permissions to handle the check in.')
                     )), 401);
                 }
@@ -94,7 +96,7 @@ class Authenticator extends Controller
                 $member->ScanDevices()->add($device);
 
                 $siteConfig = SiteConfig::current_site_config();
-                return new SS_HTTPResponse(Convert::array2json(array(
+                return new HTTPResponse(json_encode(array(
                     'id' => $device->ID,
                     'type' => self::TYPE_ACCOUNT,
                     'title' => $siteConfig->Title,
@@ -106,7 +108,7 @@ class Authenticator extends Controller
             }
         }
 
-        return new SS_HTTPResponse(Convert::array2json(array(
+        return new HTTPResponse(json_encode(array(
             'message' => _t('TicketValidator.ERROR_WRONG_AUTHENTICATION', 'Wrong username or password given.')
         )), 401);
     }
@@ -114,11 +116,11 @@ class Authenticator extends Controller
     /**
      * Authenticate by given JWT
      *
-     * @param SS_HTTPRequest $request
+     * @param HTTPRequest $request
      * @return bool|SS_HTTPResponse
      * @throws Exception
      */
-    public static function authenticate(SS_HTTPRequest $request)
+    public static function authenticate(HTTPRequest $request)
     {
         if ($header = $request->getHeader(self::config()->get('token_header'))) {
             list($jwt) = sscanf($header, 'Bearer %s');
@@ -126,17 +128,15 @@ class Authenticator extends Controller
                 try {
                     $decoded = JWT::decode($jwt, self::jwtSecretKey(), array(self::config()->get('jwt_alg')));
                 } catch (UnexpectedValueException $e) {
-                    return new SS_HTTPResponse(Convert::array2json(array(
+                    return new HTTPResponse(json_encode(array(
                         'code' => CheckInValidator::MESSAGE_TYPE_BAD,
                         'message' => $e->getMessage()
                     )), 401);
                 }
 
-                /** @var Device $device */
-                /** @var \Member $member */
                 if (
                     ($device = DataObject::get_by_id(Device::class, $decoded->data->deviceId)) &&
-                    ($member = DataObject::get_by_id('Member', $decoded->data->memberId))
+                    ($member = DataObject::get_by_id(Member::class, $decoded->data->memberId))
                 ) {
                     return $device->Token === $member->encryptWithUserSettings($jwt);
                 }
@@ -149,11 +149,11 @@ class Authenticator extends Controller
     /**
      * @todo refresh token when valid
      *
-     * @param SS_HTTPRequest $request
-     * @return bool|SS_HTTPResponse
+     * @param HTTPRequest $request
+     * @return bool|HTTPRequest
      * @throws Exception
      */
-    public function validateToken(SS_HTTPRequest $request) {
+    public function validateToken(HTTPRequest $request) {
         return self::authenticate($request);
     }
 
@@ -164,7 +164,7 @@ class Authenticator extends Controller
      */
     private static function jwtSecretKey()
     {
-        if (!defined('JWT_SECRET_KEY')) {
+        if (defined('JWT_SECRET_KEY')) {
             throw new Exception(_t('TicketValidator.ERROR_SERVER_SETUP', 'The server is not set up properly, contact your site administrator.'));
         }
 

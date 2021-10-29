@@ -1,29 +1,25 @@
 <?php
-/**
- * TicketScannerExtension.php
- *
- * @author Bram de Leeuw
- * Date: 14/06/2017
- */
 
-namespace Broarm\EventTickets\App;
+namespace Broarm\EventTickets\App\Extensions;
 
-use DataExtension;
-use FieldList;
-use GridField;
-use GridFieldConfig_RecordEditor;
+use Broarm\EventTickets\App\Model\Device;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\GridField\GridField;
+use SilverStripe\Forms\GridField\GridFieldConfig_RecordEditor;
+use SilverStripe\ORM\DataExtension;
+use SilverStripe\Security\Member;
 
 /**
  * Class SiteConfigExtension
  *
- * @property TicketScannerExtension|\Member $owner
- * @property string                         TicketScannerAppToken
- * @method \HasManyList ScanDevices()
+ * @property TicketScannerExtension|Member $owner
+ * @property string TicketScannerAppToken
+ * @method HasManyList ScanDevices()
  */
 class TicketScannerExtension extends DataExtension
 {
     private static $has_many = array(
-        'ScanDevices' => 'Broarm\EventTickets\App\Device'
+        'ScanDevices' => Device::class
     );
 
     public function updateCMSFields(FieldList $fields)

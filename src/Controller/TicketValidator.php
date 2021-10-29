@@ -1,12 +1,12 @@
 <?php
 
-namespace Broarm\EventTickets\App;
+namespace Broarm\EventTickets\App\Controller;
 
-use Broarm\EventTickets\CheckInValidator;
-use Controller;
-use Convert;
-use SS_HTTPRequest;
-use SS_HTTPResponse;
+use Broarm\EventTickets\Forms\CheckInValidator;
+use SilverStripe\Control\Controller;
+use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Core\Convert;
 
 /**
  * TicketValidator.php
@@ -23,11 +23,11 @@ class TicketValidator extends Controller
      * @return SS_HTTPResponse|string
      * @throws \SilverStripe\Omnipay\Exception\Exception
      */
-    public function index(SS_HTTPRequest $request)
+    public function index(HTTPRequest $request)
     {
-        $body = Convert::json2array($request->getBody());
+        $body = json_decode($request->getBody(), true);
         if (Authenticator::authenticate($request) && isset($body['ticket']) && $code = $body['ticket']) {
-            $validator = CheckInValidator::create();
+            $validator = new CheckInValidator();
             $result = $validator->validate($code);
             $attendee = $validator->getAttendee();
             $result['attendee'] = array(
@@ -47,12 +47,12 @@ class TicketValidator extends Controller
                     $attendee->checkIn();
                     break;
                 default:
-                    return Convert::array2json(array_change_key_case($result));
+                    return json_encode(array_change_key_case($result));
             }
 
-            return Convert::array2json(array_change_key_case($result));
+            return json_encode(array_change_key_case($result));
         } else {
-            return new SS_HTTPResponse(Convert::array2json(array(
+            return new HTTPResponse(json_encode(array(
                 'Code' => CheckInValidator::MESSAGE_TYPE_BAD,
                 'Message' => _t('TicketValidator.ERROR_TOKEN_AUTHENTICATION_FAILED', 'The request could not be authenticated, try to log in again.')
             )), 401);

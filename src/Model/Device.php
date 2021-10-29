@@ -1,23 +1,12 @@
 <?php
-/**
- * Device.php
- *
- * @author Bram de Leeuw
- * Date: 14/06/2017
- */
 
-namespace Broarm\EventTickets\App;
+namespace Broarm\EventTickets\App\Model;
 
-use Convert;
-use DataObject;
-use FieldList;
-use LiteralField;
-use ReadonlyField;
-use Tab;
-use TabSet;
-use TextareaField;
-use TextField;
-use BaconQrCode;
+use SilverStripe\Forms\ReadonlyField;
+use SilverStripe\Forms\TextareaField;
+use SilverStripe\Forms\TextField;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\Security\Member;
 
 /**
  * Class Device
@@ -35,43 +24,41 @@ use BaconQrCode;
  */
 class Device extends DataObject
 {
-    private static $db = array(
+    private static $db = [
         'Note' => 'Text',
-        'Token' => 'Varchar(255)',
-        'UniqueID' => 'Varchar(255)',
-        'LastLogin' => 'SS_DateTime'
-    );
+        'Token' => 'Varchar',
+        'UniqueID' => 'Varchar',
+        'LastLogin' => 'DBDatetime'
+    ];
 
-    private static $has_one = array(
-        'Members' => 'Member'
-    );
+    private static $has_one = [
+        'Members' => Member::class
+    ];
 
-    private static $has_many = array(
-        //'History' => 'DeviceHistory'
-    );
+    private static $indexes = [
+        'Token' => [
+            'type' => 'unique'
+        ]
+    ];
 
-    private static $indexes = array(
-        'Token' => 'unique("Token")'
-    );
-
-    private static $summary_fields = array(
+    private static $summary_fields = [
         'Title' => 'Name',
         'UniqueID' => 'Device ID',
         'Created.Nice' => 'Connected on',
         'LastLogin.Nice' => 'Last use'
-    );
+    ];
 
     public function getCMSFields()
     {
-        $fields = new FieldList(new TabSet('Root', $mainTab = new Tab('Main')));
-        $fields->addFieldsToTab('Root.Main', array(
+        $fields = parent::getCMSFields();
+        $fields->addFieldsToTab('Root.Main', [
             TextField::create('Title', 'Name'),
             TextareaField::create('Note', 'Note'),
             ReadonlyField::create('Token', 'Token'),
             ReadonlyField::create('UniqueID', 'UniqueID'),
             ReadonlyField::create('Brand', 'Brand'),
             ReadonlyField::create('Model', 'Model')
-        ));
+        ]);
 
         $this->extend('updateCMSFields', $fields);
         return $fields;
@@ -89,17 +76,6 @@ class Device extends DataObject
         } else {
             return parent::getTitle();
         }
-    }
-
-    /**
-     * Returns the singular name without the namespaces
-     *
-     * @return string
-     */
-    public function singular_name()
-    {
-        $name = explode('\\', parent::singular_name());
-        return trim(end($name));
     }
 
     /**

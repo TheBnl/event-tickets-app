@@ -1,13 +1,16 @@
 ---
 Name: event-tickets-app
-After: 'event-tickets/*'
+After: 
+  - 'event-tickets/*'
+  - '#rootroutes'
+  - '#coreroutes'
 ---
-Member:
+SilverStripe\Security\Member:
   extensions:
-    - 'Broarm\EventTickets\App\TicketScannerExtension'
+    - 'Broarm\EventTickets\App\Extensions\TicketScannerExtension'
 
-Director:
+SilverStripe\Control\Director:
   rules:
-    'eventtickets/authenticator': 'Broarm\EventTickets\App\Authenticator'
-    'eventtickets/authenticator/validatetoken': 'Broarm\EventTickets\App\Authenticator'
-    'eventtickets/validate': 'Broarm\EventTickets\App\TicketValidator'
+    'eventtickets/authenticator': 'Broarm\EventTickets\App\Controller\Authenticator'
+    'eventtickets/authenticator/validatetoken': 'Broarm\EventTickets\App\Controller\Authenticator'
+    'eventtickets/validate': 'Broarm\EventTickets\App\Controller\TicketValidator'
