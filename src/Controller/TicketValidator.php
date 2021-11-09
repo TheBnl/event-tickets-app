@@ -6,7 +6,6 @@ use Broarm\EventTickets\Forms\CheckInValidator;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
-use SilverStripe\Core\Convert;
 
 /**
  * TicketValidator.php
@@ -29,15 +28,17 @@ class TicketValidator extends Controller
         if (Authenticator::authenticate($request) && isset($body['ticket']) && $code = $body['ticket']) {
             $validator = new CheckInValidator();
             $result = $validator->validate($code);
-            $attendee = $validator->getAttendee();
-            $result['attendee'] = array(
-                'name' => $attendee->getName(),
-                'ticket' => $attendee->Ticket()->Title,
-                'event' => $attendee->Event()->Title,
-                'date' => date('d-m-Y H:i:s'),
-                'type' => $result['Code'],
-                'id' => uniqid()
-            );
+            
+            if ($attendee = $validator->getAttendee()) {
+                $result['attendee'] = array(
+                    'name' => $attendee->getName(),
+                    'ticket' => $attendee->Ticket()->Title,
+                    'event' => $attendee->TicketPage()->Title,
+                    'date' => date('d-m-Y H:i:s'),
+                    'type' => $result['Code'],
+                    'id' => uniqid()
+                );
+            }
 
             switch ($result['Code']) {
                 case CheckInValidator::MESSAGE_CHECK_OUT_SUCCESS:
