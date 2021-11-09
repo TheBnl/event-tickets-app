@@ -37,12 +37,6 @@ class Device extends DataObject
         'Members' => Member::class
     ];
 
-    private static $indexes = [
-        'Token' => [
-            'type' => 'unique'
-        ]
-    ];
-
     private static $summary_fields = [
         'Title' => 'Name',
         'UniqueID' => 'Device ID',
