@@ -10,6 +10,7 @@ use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Core\Environment;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\MemberAuthenticator\MemberAuthenticator;
@@ -29,7 +30,7 @@ class Authenticator extends Controller
     const VALIDATE_TICKET = 'eventtickets/validate';
     const VALIDATE_TOKEN = 'eventtickets/authenticator/validatetoken';
 
-    private static $icon = 'favicon-152';
+    private static $icon = 'favicon-152.png';
 
     private static $validate_path = '';
 
@@ -75,6 +76,7 @@ class Authenticator extends Controller
                         'message' => _t('TicketValidator.ERROR_USER_PERMISSIONS', 'You don’t have enough permissions to handle the check in.')
                     )), 401);
                 }
+
                 // find or create device and save token in it
                 $device = Device::findOrMake($body['uniqueId']);
 
@@ -94,6 +96,7 @@ class Authenticator extends Controller
                 $token = JWT::encode($tokenData, self::jwtSecretKey(), self::config()->get('jwt_alg'));
                 $device->Token = $member->encryptWithUserSettings($token);
                 $member->ScanDevices()->add($device);
+
 
                 $siteConfig = SiteConfig::current_site_config();
                 return new HTTPResponse(json_encode(array(
@@ -164,10 +167,11 @@ class Authenticator extends Controller
      */
     private static function jwtSecretKey()
     {
-        if (defined('JWT_SECRET_KEY')) {
+        $key = Environment::getEnv('JWT_SECRET_KEY');
+        if (!$key) {
             throw new Exception(_t('TicketValidator.ERROR_SERVER_SETUP', 'The server is not set up properly, contact your site administrator.'));
         }
 
-        return JWT_SECRET_KEY;
+        return $key;
     }
 }
