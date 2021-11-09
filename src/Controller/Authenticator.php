@@ -101,6 +101,7 @@ class Authenticator extends Controller
                 $siteConfig = SiteConfig::current_site_config();
                 return new HTTPResponse(json_encode(array(
                     'id' => $device->ID,
+                    'name' => $member->getName(),
                     'type' => self::TYPE_ACCOUNT,
                     'title' => $siteConfig->Title,
                     'image' => Director::absoluteBaseURL() . self::config()->get('icon'),
