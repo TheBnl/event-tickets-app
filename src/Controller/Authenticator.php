@@ -70,15 +70,17 @@ class Authenticator extends Controller
                 'Password' => $body['password'],
             ), $request);
 
-            if ($member->exists()) {
+            if ($member && $member->exists()) {
                 if (!Permission::check('HANDLE_CHECK_IN', 'any', $member)) {
                     return new HTTPResponse(json_encode(array(
                         'message' => _t('TicketValidator.ERROR_USER_PERMISSIONS', 'You don’t have enough permissions to handle the check in.')
                     )), 401);
                 }
 
+                $brand = isset($body['brand']) ? $body['brand'] : '-';
+                $model = isset($body['model']) ? $body['model'] : '-';
                 // find or create device and save token in it
-                $device = Device::findOrMake($body['uniqueId']);
+                $device = Device::findOrMake($body['uniqueId'], $brand, $model);
 
                 // create the token
                 $tokenData = array(
