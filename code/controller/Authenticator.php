@@ -27,7 +27,7 @@ class Authenticator extends Controller
     const VALIDATE_TICKET = 'eventtickets/validate';
     const VALIDATE_TOKEN = 'eventtickets/authenticator/validatetoken';
 
-    private static $icon = 'favicon-152';
+    private static $icon = 'favicon-152.png';
 
     private static $validate_path = '';
 
