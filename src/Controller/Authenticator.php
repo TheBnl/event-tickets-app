@@ -12,6 +12,7 @@ use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Environment;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\MemberAuthenticator\MemberAuthenticator;
 use SilverStripe\Security\Permission;
@@ -135,7 +136,7 @@ class Authenticator extends Controller
                     $decoded = JWT::decode($jwt, self::jwtSecretKey(), array(self::config()->get('jwt_alg')));
                 } catch (UnexpectedValueException $e) {
                     return new HTTPResponse(json_encode(array(
-                        'code' => CheckInValidator::MESSAGE_TYPE_BAD,
+                        'code' => ValidationResult::TYPE_ERROR,
                         'message' => $e->getMessage()
                     )), 401);
                 }

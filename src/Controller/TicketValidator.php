@@ -6,6 +6,7 @@ use Broarm\EventTickets\Forms\CheckInValidator;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\ORM\ValidationResult;
 
 /**
  * TicketValidator.php
@@ -18,8 +19,8 @@ class TicketValidator extends Controller
     /**
      * Handle the request
      *
-     * @param SS_HTTPRequest $request
-     * @return SS_HTTPResponse|string
+     * @param HTTPRequest $request
+     * @return HTTPResponse|string
      * @throws \SilverStripe\Omnipay\Exception\Exception
      */
     public function index(HTTPRequest $request)
@@ -54,7 +55,7 @@ class TicketValidator extends Controller
             return json_encode(array_change_key_case($result));
         } else {
             return new HTTPResponse(json_encode(array(
-                'Code' => CheckInValidator::MESSAGE_TYPE_BAD,
+                'Code' => ValidationResult::TYPE_ERROR,
                 'Message' => _t('TicketValidator.ERROR_TOKEN_AUTHENTICATION_FAILED', 'The request could not be authenticated, try to log in again.')
             )), 401);
         }
