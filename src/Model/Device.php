@@ -28,7 +28,7 @@ class Device extends DataObject
     
     private static $db = [
         'Note' => 'Text',
-        'Token' => 'Varchar(300)',
+        'Token' => 'Text',
         'UniqueID' => 'Varchar',
         'LastLogin' => 'DBDatetime'
     ];
