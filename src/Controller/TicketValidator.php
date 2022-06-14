@@ -55,8 +55,8 @@ class TicketValidator extends Controller
             return json_encode(array_change_key_case($result));
         } else {
             return new HTTPResponse(json_encode(array(
-                'Code' => ValidationResult::TYPE_ERROR,
-                'Message' => _t('TicketValidator.ERROR_TOKEN_AUTHENTICATION_FAILED', 'The request could not be authenticated, try to log in again.')
+                'code' => ValidationResult::TYPE_ERROR,
+                'message' => _t('TicketValidator.ERROR_TOKEN_AUTHENTICATION_FAILED', 'The request could not be authenticated, try to log in again.')
             )), 401);
         }
     }
