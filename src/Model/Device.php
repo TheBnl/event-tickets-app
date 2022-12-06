@@ -20,7 +20,6 @@ use SilverStripe\Security\Member;
  * @property string DeviceID
  * @property string BundleID
  * @property string LastLogin
- * @method \ManyManyList Members()
  */
 class Device extends DataObject
 {
@@ -36,7 +35,7 @@ class Device extends DataObject
     ];
 
     private static $has_one = [
-        'Members' => Member::class
+        'Owner' => Member::class
     ];
 
     private static $summary_fields = [
