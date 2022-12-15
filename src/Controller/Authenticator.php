@@ -81,36 +81,15 @@ class Authenticator extends Controller
                 $brand = isset($body['brand']) ? $body['brand'] : '-';
                 $model = isset($body['model']) ? $body['model'] : '-';
                 // find or create device and save token in it
-                $device = Device::findOrMake($body['uniqueId'], $brand, $model);
-
-                // create the token
-                $tokenData = array(
-                    'iat' => $issuedAt = time(),
-                    'jti' => $device->ID,
-                    'iss' => Director::absoluteBaseURL(),
-                    'nbf' => $notBefore = $issuedAt + self::config()->get('jwt_nbf_offset'),
-                    'exp' => $notBefore + self::config()->get('jwt_exp_offset'),
-                    'data' => [
-                        'memberId' => $member->ID,
-                        'deviceId' => $device->ID
-                    ]
-                );
-
-                $token = JWT::encode($tokenData, self::jwtSecretKey(), self::config()->get('jwt_alg'));
+                $device = Device::findOrMake($body['uniqueId'], $brand, $model);                
+                $token = self::createTokenFor($member, $device);
                 $device->Token = $member->encryptWithUserSettings($token);
                 $member->ScanDevices()->add($device);
 
-
-                $siteConfig = SiteConfig::current_site_config();
-                return new HTTPResponse(json_encode(array(
-                    'id' => $device->ID,
-                    'name' => $member->getName(),
-                    'type' => self::TYPE_ACCOUNT,
-                    'title' => $siteConfig->Title,
-                    'image' => Director::absoluteBaseURL() . self::config()->get('icon'),
-                    'token' => $token,
-                    'validatePath' => Controller::join_links(Director::absoluteBaseURL(), self::VALIDATE_TICKET),
-                    'validateTokenPath' => Controller::join_links(Director::absoluteBaseURL(), self::VALIDATE_TOKEN)
+                return new HTTPResponse(json_encode(self::createResponseData(
+                    $member,
+                    $device,
+                    $token
                 )), 200);
             }
         }
@@ -162,6 +141,36 @@ class Authenticator extends Controller
      */
     public function validateToken(HTTPRequest $request) {
         return self::authenticate($request);
+    }
+
+    public static function createTokenFor(Member $member, Device $device)
+    {
+        return JWT::encode([
+            'iat' => $issuedAt = time(),
+            'jti' => $device->ID,
+            'iss' => Director::absoluteBaseURL(),
+            'nbf' => $notBefore = $issuedAt + self::config()->get('jwt_nbf_offset'),
+            'exp' => $notBefore + self::config()->get('jwt_exp_offset'),
+            'data' => [
+                'memberId' => $member->ID,
+                'deviceId' => $device->ID
+            ]
+        ], self::jwtSecretKey(), self::config()->get('jwt_alg'));
+    }
+
+    public static function createResponseData(Member $member, Device $device, string $token)
+    {
+        $siteConfig = SiteConfig::current_site_config();
+        return [
+            'id' => $device->ID,
+            'name' => $member->getName(),
+            'type' => self::TYPE_ACCOUNT,
+            'title' => $siteConfig->Title,
+            'image' => Director::absoluteBaseURL() . self::config()->get('icon'),
+            'token' => $token,
+            'validatePath' => Controller::join_links(Director::absoluteBaseURL(), self::VALIDATE_TICKET),
+            'validateTokenPath' => Controller::join_links(Director::absoluteBaseURL(), self::VALIDATE_TOKEN)
+        ];
     }
 
     /**

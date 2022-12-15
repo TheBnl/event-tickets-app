@@ -2,6 +2,17 @@
 
 namespace Broarm\EventTickets\App\Model;
 
+use BaconQrCode\Renderer\Image\ImagickImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
+use Broarm\EventTickets\App\Controller\Authenticator;
+use Broarm\EventTickets\App\Fields\QRCodeField;
+use LeKoala\CmsActions\CustomAction;
+use LeKoala\CmsActions\SilverStripeIcons;
+use SilverStripe\Control\Controller;
+use SilverStripe\Control\Director;
+use SilverStripe\Forms\LiteralField;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\Forms\TextareaField;
 use SilverStripe\Forms\TextField;
@@ -48,19 +59,72 @@ class Device extends DataObject
     public function getCMSFields()
     {
         $fields = parent::getCMSFields();
+        $fields->removeByName('Token');
         $fields->addFieldsToTab('Root.Main', [
             TextField::create('Title', 'Name'),
             TextareaField::create('Note', 'Note'),
-            ReadonlyField::create('Token', 'Token'),
             ReadonlyField::create('UniqueID', 'UniqueID'),
-            ReadonlyField::create('Brand', 'Brand'),
-            ReadonlyField::create('Model', 'Model')
+            TextField::create('Brand', 'Brand'),
+            TextField::create('Model', 'Model')
         ]);
+
+        // connect to action, invalidates the existing token
+        if (!$this->Token && $loginQR = $this->getLoginQR()) {
+            $qrField = QRCodeField::create('LoginQR', _t(__CLASS__ . '.LoginQR', 'Login QR-code'), $loginQR)
+                ->setDescription(_t(__CLASS__ . '.LoginQRDescription', 'Deze QR code blijft maar tijdelijk zichtbaar'));
+            $fields->add($qrField);
+        }
 
         $this->extend('updateCMSFields', $fields);
         return $fields;
     }
 
+    public function getCMSActions()
+    {
+        $actions = parent::getCMSActions();
+
+        $action = new CustomAction("createLoginQR", _t(__CLASS__ . '.CreateNewLoginQR', 'Create Login QR'));
+        $action->setButtonIcon(SilverStripeIcons::ICON_ATTENTION);
+        $action->setConfirmation(_t(__CLASS__ . '.ConfirmNewQR', 'Wanneer je een nieuwe QR-code genereert wordt een ingelogd appaat uitgelogd.'));
+        $actions->push($action);
+
+        return $actions;
+    }
+
+
+    public function createLoginQR() {
+        $this->Token = null;
+        $this->write();
+        return _t(__CLASS__ . '.CreatedNewQR', 'Er is een nieuwe QR-code aangemaakt');
+    }
+
+    public function getLoginQR()
+    {
+        if (!$this->exists()) {
+            return null;
+        }
+
+        if (!($member = $this->Owner()) || !$member->exists()) {
+            return null;
+        }
+
+        // if no token exists create and store
+        if (!$token = $this->Token) {
+            $token = Authenticator::createTokenFor($member, $this);
+            $this->Token = $member->encryptWithUserSettings($token);
+            $this->write();
+        }
+        
+        $data = Authenticator::createResponseData($member, $this, $token);
+        $renderer = new ImageRenderer(
+            new RendererStyle(400),
+            new ImagickImageBackEnd()
+        );
+
+        $writer = new Writer($renderer);
+        return base64_encode($writer->writeString(json_encode($data)));
+    }
+    
     /**
      * Get the title
      *
