@@ -112,7 +112,7 @@ class Authenticator extends Controller
             list($jwt) = sscanf($header, 'Bearer %s');
             if (!empty($jwt)) {
                 try {
-                    $decoded = JWT::decode($jwt, self::jwtSecretKey(), array(self::config()->get('jwt_alg')));
+                    $decoded = JWT::decode($jwt, self::jwtSecretKey());
                 } catch (UnexpectedValueException $e) {
                     return new HTTPResponse(json_encode(array(
                         'code' => ValidationResult::TYPE_ERROR,
