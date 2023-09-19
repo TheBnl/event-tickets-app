@@ -3,6 +3,8 @@
 namespace Broarm\EventTickets\App\Controller;
 
 use Broarm\EventTickets\Forms\CheckInValidator;
+use Broarm\EventTickets\Model\CheckInValidatorResult;
+use Exception;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
@@ -30,6 +32,12 @@ class TicketValidator extends Controller
             $validator = new CheckInValidator();
             $result = $validator->validate($code);
             
+            try {
+                CheckInValidatorResult::createFromValidatorResult($result)->write();
+            } catch (Exception $e) {
+                // soft fail
+            }
+
             if ($attendee = $validator->getAttendee()) {
                 $result['attendee'] = array(
                     'name' => $attendee->getName(),
@@ -52,12 +60,16 @@ class TicketValidator extends Controller
                     return json_encode(array_change_key_case($result));
             }
 
-            return json_encode(array_change_key_case($result));
+            $response = new HTTPResponse(json_encode(array_change_key_case($result)), 200);
+            $response->addHeader('Content-Type', 'application/json');
+            return $response;
         } else {
-            return new HTTPResponse(json_encode(array(
+            $response = new HTTPResponse(json_encode(array(
                 'code' => ValidationResult::TYPE_ERROR,
                 'message' => _t('TicketValidator.ERROR_TOKEN_AUTHENTICATION_FAILED', 'The request could not be authenticated, try to log in again.')
             )), 401);
+            $response->addHeader('Content-Type', 'application/json');
+            return $response;
         }
     }
 }
